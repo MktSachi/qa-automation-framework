@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     tools {
-    maven 'Maven3'
-    jdk 'JDK21'
+        maven 'Maven3'
+        jdk 'JDK21'
     }
 
     stages {
@@ -32,6 +32,15 @@ pipeline {
             steps {
                 echo 'Archiving test results...'
                 junit '**/target/surefire-reports/*.xml'
+            }
+        }
+
+        stage('Allure Report') {
+            steps {
+                echo 'Generating Allure report...'
+                allure includeProperties: false,
+                       jdk: '',
+                       results: [[path: 'allure-results']]
             }
         }
     }
