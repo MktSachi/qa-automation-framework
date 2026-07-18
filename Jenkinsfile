@@ -50,10 +50,26 @@ pipeline {
             echo 'Pipeline finished. Cleaning up...'
         }
         success {
-            echo 'All tests passed!'
+            emailext(
+                subject: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+                body: """<p>Good news — the build succeeded.</p>
+                         <p>Job: ${env.JOB_NAME}</p>
+                         <p>Build Number: ${env.BUILD_NUMBER}</p>
+                         <p>View full report: <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>""",
+                to: 'mktheekshana2001@gmail.com',
+                mimeType: 'text/html'
+            )
         }
         failure {
-            echo 'Build or tests failed. Check console output above.'
+            emailext(
+                subject: "FAILURE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+                body: """<p>The build failed — check the console output.</p>
+                         <p>Job: ${env.JOB_NAME}</p>
+                         <p>Build Number: ${env.BUILD_NUMBER}</p>
+                         <p>Console: <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>""",
+                to: 'mktheekshana2001@gmail.com',
+                mimeType: 'text/html'
+            )
         }
     }
 }
