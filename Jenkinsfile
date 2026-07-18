@@ -42,7 +42,8 @@ pipeline {
                 subject: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
                 body: """<p>All tests passed.</p>
                          <p>Job: ${env.JOB_NAME} | Build: ${env.BUILD_NUMBER}</p>
-                         <p>Report: <a href="${env.BUILD_URL}allure">${env.BUILD_URL}allure</a></p>""",
+                         <p>Report: <a href="${env.BUILD_URL}allure">${env.BUILD_URL}allure</a></p>
+                         <p>Console: <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>""",
                 to: 'mktheekshana2001@gmail.com',
                 mimeType: 'text/html'
             )
@@ -52,7 +53,8 @@ pipeline {
                 subject: "UNSTABLE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' - Some tests failed",
                 body: """<p>The pipeline ran successfully, but one or more test cases failed.</p>
                          <p>Job: ${env.JOB_NAME} | Build: ${env.BUILD_NUMBER}</p>
-                         <p>Check the report for details: <a href="${env.BUILD_URL}allure">${env.BUILD_URL}allure</a></p>""",
+                         <p>Check the report for details: <a href="${env.BUILD_URL}allure">${env.BUILD_URL}allure</a></p>
+                         <p>Console: <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>""",
                 to: 'mktheekshana2001@gmail.com',
                 mimeType: 'text/html'
             )
