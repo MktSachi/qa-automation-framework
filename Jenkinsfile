@@ -32,30 +32,37 @@ pipeline {
     post {
         always {
             echo 'Archiving test results and generating reports...'
-            catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
-                junit '**/target/surefire-reports/*.xml'
-            }
+            junit '**/target/surefire-reports/*.xml'
             allure includeProperties: false,
                    jdk: '',
                    results: [[path: 'allure-results']]
         }
         success {
             emailext(
-                subject: "Pipeline Completed: '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
-                body: """<p>The pipeline completed successfully.</p>
+                subject: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+                body: """<p>All tests passed.</p>
                          <p>Job: ${env.JOB_NAME} | Build: ${env.BUILD_NUMBER}</p>
-                         <p>View the full test report (pass/fail breakdown) here:</p>
-                         <p><a href="${env.BUILD_URL}allure">${env.BUILD_URL}allure</a></p>""",
+                         <p>Report: <a href="${env.BUILD_URL}allure">${env.BUILD_URL}allure</a></p>""",
+                to: 'mktheekshana2001@gmail.com',
+                mimeType: 'text/html'
+            )
+        }
+        unstable {
+            emailext(
+                subject: "UNSTABLE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' - Some tests failed",
+                body: """<p>The pipeline ran successfully, but one or more test cases failed.</p>
+                         <p>Job: ${env.JOB_NAME} | Build: ${env.BUILD_NUMBER}</p>
+                         <p>Check the report for details: <a href="${env.BUILD_URL}allure">${env.BUILD_URL}allure</a></p>""",
                 to: 'mktheekshana2001@gmail.com',
                 mimeType: 'text/html'
             )
         }
         failure {
             emailext(
-                subject: "PIPELINE FAILED: '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
-                body: """<p>The pipeline itself failed — this means a build, checkout, or infrastructure problem, not a test assertion failure.</p>
+                subject: "FAILURE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' - Pipeline broke",
+                body: """<p>The pipeline itself failed (not just a test assertion) — check console output.</p>
                          <p>Job: ${env.JOB_NAME} | Build: ${env.BUILD_NUMBER}</p>
-                         <p>Console output: <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>""",
+                         <p>Console: <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>""",
                 to: 'mktheekshana2001@gmail.com',
                 mimeType: 'text/html'
             )
