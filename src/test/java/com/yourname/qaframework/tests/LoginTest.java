@@ -39,7 +39,7 @@ public class LoginTest extends BaseTest {
         LoginPage loginPage = new LoginPage(driver);
         loginPage.login("", "");
 
-        String expectedError = "Epic sadface: Username is required";
+        String expectedError = "Epic sadface: Username is...";
         Assert.assertEquals(loginPage.getErrorMessage(), expectedError);
     }
 }
