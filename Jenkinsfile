@@ -24,7 +24,7 @@ pipeline {
         stage('Test') {
             steps {
                 echo 'Running automated tests...'
-                bat 'mvn test'
+                bat 'mvn test -Dmaven.test.failure.ignore=true'
             }
         }
     }
@@ -40,22 +40,29 @@ pipeline {
         success {
             emailext(
                 subject: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
-                body: """<p>Good news — the build succeeded.</p>
-                         <p>Job: ${env.JOB_NAME}</p>
-                         <p>Build Number: ${env.BUILD_NUMBER}</p>
-                         <p>View full report: <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>""",
+                body: """<p>All tests passed.</p>
+                         <p>Job: ${env.JOB_NAME} | Build: ${env.BUILD_NUMBER}</p>
+                         <p>Report: <a href="${env.BUILD_URL}allure">${env.BUILD_URL}allure</a></p>""",
+                to: 'mktheekshana2001@gmail.com',
+                mimeType: 'text/html'
+            )
+        }
+        unstable {
+            emailext(
+                subject: "UNSTABLE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' - Some tests failed",
+                body: """<p>The pipeline ran successfully, but one or more test cases failed.</p>
+                         <p>Job: ${env.JOB_NAME} | Build: ${env.BUILD_NUMBER}</p>
+                         <p>Check the report for details: <a href="${env.BUILD_URL}allure">${env.BUILD_URL}allure</a></p>""",
                 to: 'mktheekshana2001@gmail.com',
                 mimeType: 'text/html'
             )
         }
         failure {
             emailext(
-                subject: "FAILURE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
-                body: """<p>The build failed — check the console output and Allure report.</p>
-                         <p>Job: ${env.JOB_NAME}</p>
-                         <p>Build Number: ${env.BUILD_NUMBER}</p>
-                         <p>Console: <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>
-                         <p>Allure Report: <a href="${env.BUILD_URL}allure">${env.BUILD_URL}allure</a></p>""",
+                subject: "FAILURE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' - Pipeline broke",
+                body: """<p>The pipeline itself failed (not just a test assertion) — check console output.</p>
+                         <p>Job: ${env.JOB_NAME} | Build: ${env.BUILD_NUMBER}</p>
+                         <p>Console: <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>""",
                 to: 'mktheekshana2001@gmail.com',
                 mimeType: 'text/html'
             )
