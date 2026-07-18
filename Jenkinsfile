@@ -27,27 +27,15 @@ pipeline {
                 bat 'mvn test'
             }
         }
-
-        stage('Report') {
-            steps {
-                echo 'Archiving test results...'
-                junit '**/target/surefire-reports/*.xml'
-            }
-        }
-
-        stage('Allure Report') {
-            steps {
-                echo 'Generating Allure report...'
-                allure includeProperties: false,
-                       jdk: '',
-                       results: [[path: 'allure-results']]
-            }
-        }
     }
 
     post {
         always {
-            echo 'Pipeline finished. Cleaning up...'
+            echo 'Archiving test results and generating reports...'
+            junit '**/target/surefire-reports/*.xml'
+            allure includeProperties: false,
+                   jdk: '',
+                   results: [[path: 'allure-results']]
         }
         success {
             emailext(
@@ -63,10 +51,11 @@ pipeline {
         failure {
             emailext(
                 subject: "FAILURE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
-                body: """<p>The build failed — check the console output.</p>
+                body: """<p>The build failed — check the console output and Allure report.</p>
                          <p>Job: ${env.JOB_NAME}</p>
                          <p>Build Number: ${env.BUILD_NUMBER}</p>
-                         <p>Console: <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>""",
+                         <p>Console: <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>
+                         <p>Allure Report: <a href="${env.BUILD_URL}allure">${env.BUILD_URL}allure</a></p>""",
                 to: 'mktheekshana2001@gmail.com',
                 mimeType: 'text/html'
             )
