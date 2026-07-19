@@ -14,6 +14,14 @@ pipeline {
             }
         }
 
+        stage('Start Selenium Container') {
+            steps {
+                echo 'Starting Chrome container via Docker...'
+                bat 'docker compose up -d'
+                bat 'timeout /t 10'
+            }
+        }
+
         stage('Build') {
             steps {
                 echo 'Building the project...'
@@ -27,15 +35,30 @@ pipeline {
                 bat 'mvn test -Dmaven.test.failure.ignore=true'
             }
         }
+
+        stage('Report') {
+            steps {
+                echo 'Archiving JUnit test results...'
+                catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+                    junit '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('Allure Report') {
+            steps {
+                echo 'Generating Allure report...'
+                allure includeProperties: false,
+                       jdk: '',
+                       results: [[path: 'allure-results']]
+            }
+        }
     }
 
     post {
         always {
-            echo 'Archiving test results and generating reports...'
-            junit '**/target/surefire-reports/*.xml'
-            allure includeProperties: false,
-                   jdk: '',
-                   results: [[path: 'allure-results']]
+            echo 'Stopping Chrome container...'
+            bat 'docker compose down'
         }
         success {
             emailext(
@@ -43,17 +66,6 @@ pipeline {
                 body: """<p>All tests passed.</p>
                          <p>Job: ${env.JOB_NAME} | Build: ${env.BUILD_NUMBER}</p>
                          <p>Report: <a href="${env.BUILD_URL}allure">${env.BUILD_URL}allure</a></p>
-                         <p>Console: <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>""",
-                to: 'mktheekshana2001@gmail.com',
-                mimeType: 'text/html'
-            )
-        }
-        unstable {
-            emailext(
-                subject: "Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' - Some tests failed",
-                body: """<p>The pipeline ran successfully, but one or more test cases failed.</p>
-                         <p>Job: ${env.JOB_NAME} | Build: ${env.BUILD_NUMBER}</p>
-                         <p>Check the report for details: <a href="${env.BUILD_URL}allure">${env.BUILD_URL}allure</a></p>
                          <p>Console: <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>""",
                 to: 'mktheekshana2001@gmail.com',
                 mimeType: 'text/html'
