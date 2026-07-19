@@ -15,12 +15,12 @@ pipeline {
         }
 
         stage('Start Selenium Container') {
-            steps {
-                echo 'Starting Chrome container via Docker...'
-                bat 'docker compose up -d'
-                bat 'timeout /t 10'
-            }
-        }
+    steps {
+        echo 'Starting Chrome container via Docker...'
+        bat 'docker compose up -d'
+        bat 'ping -n 11 127.0.0.1 > nul'
+    }
+}
 
         stage('Build') {
             steps {
