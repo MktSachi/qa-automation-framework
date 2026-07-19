@@ -18,7 +18,7 @@ pipeline {
     steps {
         echo 'Starting Chrome container via Docker...'
         bat 'docker compose up -d'
-        bat 'ping -n 11 127.0.0.1 > nul'
+        sleep(time: 10, unit: 'SECONDS')
     }
 }
 
