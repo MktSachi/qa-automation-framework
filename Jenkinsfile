@@ -29,6 +29,13 @@ pipeline {
             }
         }
 
+        stage('Clean Previous Results') {
+    steps {
+        echo 'Clearing old Allure results...'
+        bat 'if exist allure-results rmdir /s /q allure-results'
+    }
+}
+
         stage('Test') {
             steps {
                 echo 'Running automated tests...'
