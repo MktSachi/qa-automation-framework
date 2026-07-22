@@ -42,13 +42,16 @@ pipeline {
         withCredentials([string(credentialsId: 'zephyr-api-token', variable: 'ZEPHYR_TOKEN')]) {
             script {
                 def cycleName = "Automated Run - Build #${env.BUILD_NUMBER}"
-                bat """
-                    C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe -Command ^
-                    "\$headers = @{ Authorization = 'Bearer %ZEPHYR_TOKEN%'; 'Content-Type' = 'application/json' }; ^
-                    \$body = @{ projectKey = 'QAF'; name = '${cycleName}' } | ConvertTo-Json; ^
-                    \$result = Invoke-RestMethod -Uri 'https://api.zephyrscale.smartbear.com/v2/testcycles' -Method POST -Headers \$headers -Body \$body; ^
-                    \$result.key | Out-File -FilePath cycle_key.txt -Encoding ascii"
-                """
+
+                writeFile file: 'create_cycle.ps1', text: """
+\$headers = @{ Authorization = "Bearer \$env:ZEPHYR_TOKEN"; "Content-Type" = "application/json" }
+\$body = @{ projectKey = "QAF"; name = "${cycleName}" } | ConvertTo-Json
+\$result = Invoke-RestMethod -Uri "https://api.zephyrscale.smartbear.com/v2/testcycles" -Method POST -Headers \$headers -Body \$body
+\$result.key | Out-File -FilePath cycle_key.txt -Encoding ascii
+"""
+
+                bat 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe -ExecutionPolicy Bypass -File create_cycle.ps1'
+
                 env.ZEPHYR_CYCLE_KEY = readFile('cycle_key.txt').trim()
                 echo "Created Zephyr Test Cycle: ${env.ZEPHYR_CYCLE_KEY}"
             }
