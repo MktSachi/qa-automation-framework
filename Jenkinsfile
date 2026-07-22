@@ -36,6 +36,19 @@ pipeline {
             }
         }
 
+        stage('Push Results to Zephyr') {
+    steps {
+        echo 'Uploading test results to Zephyr Scale...'
+        withCredentials([string(credentialsId: 'zephyr-api-token', variable: 'ZEPHYR_TOKEN')]) {
+            bat '''
+                curl -X POST "https://api.zephyrscale.smartbear.com/v2/automations/executions/junit?projectKey=QAF&testCycleKey=YOUR_CYCLE_KEY" ^
+                -H "Authorization: Bearer %ZEPHYR_TOKEN%" ^
+                -F "file=@target/surefire-reports/testng-results.xml;type=application/xml"
+            '''
+        }
+    }
+}
+
         stage('Report') {
             steps {
                 echo 'Archiving JUnit test results...'
