@@ -70,26 +70,33 @@ pipeline {
     steps {
         echo 'Converting test names to match Zephyr key format...'
         script {
-            def resultsFile = 'target/surefire-reports/testng-results.xml'
-            def content = readFile(resultsFile)
-            content = content.replaceAll('QAF_T', 'QAF-T')
-            writeFile file: resultsFile, text: content
+            def files = findFiles(glob: 'target/surefire-reports/TEST-*.xml')
+            files.each { f ->
+                def content = readFile(f.path)
+                content = content.replaceAll('QAF_T', 'QAF-T')
+                writeFile file: f.path, text: content
+            }
         }
     }
 }
 
         stage('Push Results to Zephyr') {
-            steps {
-                echo 'Uploading test results to Zephyr Scale...'
-                withCredentials([string(credentialsId: 'zephyr-api-token', variable: 'ZEPHYR_TOKEN')]) {
+    steps {
+        echo 'Uploading test results to Zephyr Scale...'
+        withCredentials([string(credentialsId: 'zephyr-api-token', variable: 'ZEPHYR_TOKEN')]) {
+            script {
+                def files = findFiles(glob: 'target/surefire-reports/TEST-*.xml')
+                files.each { f ->
                     bat """
                         C:\\Windows\\System32\\curl.exe -X POST "https://api.zephyrscale.smartbear.com/v2/automations/executions/junit?projectKey=QAF&testCycleKey=${env.ZEPHYR_CYCLE_KEY}" ^
                         -H "Authorization: Bearer %ZEPHYR_TOKEN%" ^
-                        -F "file=@target/surefire-reports/testng-results.xml;type=application/xml"
+                        -F "file=@${f.path};type=application/xml"
                     """
                 }
             }
         }
+    }
+}
 
         stage('Report') {
             steps {
