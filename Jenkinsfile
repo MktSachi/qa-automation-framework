@@ -30,11 +30,30 @@ pipeline {
         }
 
         stage('Clean Previous Results') {
-    steps {
-        echo 'Clearing old Allure results...'
-        bat 'if exist allure-results rmdir /s /q allure-results'
-    }
-}
+            steps {
+                echo 'Clearing old Allure results...'
+                bat 'if exist allure-results rmdir /s /q allure-results'
+            }
+        }
+
+        stage('Create Zephyr Test Cycle') {
+            steps {
+                echo 'Creating a new Zephyr Test Cycle for this run...'
+                withCredentials([string(credentialsId: 'zephyr-api-token', variable: 'ZEPHYR_TOKEN')]) {
+                    script {
+                        def cycleName = "Automated Run - Build #${env.BUILD_NUMBER}"
+                        def cycleKey = powershell(returnStdout: true, script: """
+                            \$headers = @{ Authorization = "Bearer \$env:ZEPHYR_TOKEN"; "Content-Type" = "application/json" }
+                            \$body = @{ projectKey = "QAF"; name = "${cycleName}" } | ConvertTo-Json
+                            \$result = Invoke-RestMethod -Uri "https://api.zephyrscale.smartbear.com/v2/testcycles" -Method POST -Headers \$headers -Body \$body
+                            Write-Output \$result.key
+                        """).trim()
+                        env.ZEPHYR_CYCLE_KEY = cycleKey
+                        echo "Created Zephyr Test Cycle: ${env.ZEPHYR_CYCLE_KEY}"
+                    }
+                }
+            }
+        }
 
         stage('Test') {
             steps {
@@ -44,17 +63,17 @@ pipeline {
         }
 
         stage('Push Results to Zephyr') {
-    steps {
-        echo 'Uploading test results to Zephyr Scale...'
-        withCredentials([string(credentialsId: 'zephyr-api-token', variable: 'ZEPHYR_TOKEN')]) {
-            bat '''
-                C:\\Windows\\System32\\curl.exe -X POST "https://api.zephyrscale.smartbear.com/v2/automations/executions/junit?projectKey=QAF&testCycleKey=YOUR_CYCLE_KEY" ^
-                -H "Authorization: Bearer %ZEPHYR_TOKEN%" ^
-                -F "file=@target/surefire-reports/testng-results.xml;type=application/xml"
-            '''
+            steps {
+                echo 'Uploading test results to Zephyr Scale...'
+                withCredentials([string(credentialsId: 'zephyr-api-token', variable: 'ZEPHYR_TOKEN')]) {
+                    bat """
+                        C:\\Windows\\System32\\curl.exe -X POST "https://api.zephyrscale.smartbear.com/v2/automations/executions/junit?projectKey=QAF&testCycleKey=${env.ZEPHYR_CYCLE_KEY}" ^
+                        -H "Authorization: Bearer %ZEPHYR_TOKEN%" ^
+                        -F "file=@target/surefire-reports/testng-results.xml;type=application/xml"
+                    """
+                }
+            }
         }
-    }
-}
 
         stage('Report') {
             steps {
@@ -83,6 +102,7 @@ pipeline {
                 subject: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
                 body: """<p>All tests passed.</p>
                          <p>Job: ${env.JOB_NAME} | Build: ${env.BUILD_NUMBER}</p>
+                         <p>Zephyr Cycle: ${env.ZEPHYR_CYCLE_KEY}</p>
                          <p>Report: <a href="${env.BUILD_URL}allure">${env.BUILD_URL}allure</a></p>
                          <p>Console: <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>""",
                 to: 'mktheekshana2001@gmail.com',
@@ -94,6 +114,7 @@ pipeline {
                 subject: "UNSTABLE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' - Some tests failed",
                 body: """<p>The pipeline completed, but one or more test cases failed.</p>
                          <p>Job: ${env.JOB_NAME} | Build: ${env.BUILD_NUMBER}</p>
+                         <p>Zephyr Cycle: ${env.ZEPHYR_CYCLE_KEY}</p>
                          <p>Check the report for details: <a href="${env.BUILD_URL}allure">${env.BUILD_URL}allure</a></p>
                          <p>Console: <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>""",
                 to: 'mktheekshana2001@gmail.com',
