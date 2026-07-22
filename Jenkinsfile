@@ -66,6 +66,18 @@ pipeline {
             }
         }
 
+        stage('Fix Zephyr Key Format') {
+    steps {
+        echo 'Converting test names to match Zephyr key format...'
+        script {
+            def resultsFile = 'target/surefire-reports/testng-results.xml'
+            def content = readFile(resultsFile)
+            content = content.replaceAll('QAF_T', 'QAF-T')
+            writeFile file: resultsFile, text: content
+        }
+    }
+}
+
         stage('Push Results to Zephyr') {
             steps {
                 echo 'Uploading test results to Zephyr Scale...'
