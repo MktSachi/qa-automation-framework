@@ -9,15 +9,14 @@ import org.testng.annotations.Test;
 public class LoginTest extends BaseTest {
 
     @Test(description = "TC_LOGIN_001 - Valid login succeeds")
-    public void shouldLoginSuccessfullyWithValidCredentials() {
-        LoginPage loginPage = new LoginPage(driver);
+    public void QAF_T1_shouldLoginSuccessfullyWithValidCredentials() {        LoginPage loginPage = new LoginPage(driver);
         loginPage.login("standard_user", "secret_sauce");
 
         Assert.assertTrue(new ProductsPage(driver).isProductsPageDisplayed(), "Products page was not loaded");
     }
 
     @Test(description = "TC_LOGIN_002 - Invalid password shows error")
-    public void shouldShowErrorWithInvalidPassword() {
+    public void QAF_T2_shouldShowErrorWithInvalidPassword() {
         LoginPage loginPage = new LoginPage(driver);
         loginPage.login("standard_user", "wrong_password");
 
@@ -26,7 +25,7 @@ public class LoginTest extends BaseTest {
     }
 
     @Test(description = "TC_LOGIN_003 - Locked out user is blocked")
-    public void shouldBlockLockedOutUser() {
+    public void QAF_T3_shouldBlockLockedOutUser() {
         LoginPage loginPage = new LoginPage(driver);
         loginPage.login("locked_out_user", "secret_sauce");
 
@@ -35,7 +34,7 @@ public class LoginTest extends BaseTest {
     }
 
     @Test(description = "TC_LOGIN_004 - Empty credentials shows error")
-    public void shouldShowErrorWithEmptyCredentials() {
+    public void QAF_T4_shouldShowErrorWithEmptyCredentials() {
         LoginPage loginPage = new LoginPage(driver);
         loginPage.login("", "");
 
