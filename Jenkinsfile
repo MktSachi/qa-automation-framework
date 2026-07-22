@@ -36,19 +36,6 @@ pipeline {
             }
         }
 
-        stage('Push Results to Zephyr') {
-            steps {
-                echo 'Uploading test results to Zephyr Scale...'
-                withCredentials([string(credentialsId: 'zephyr-api-token', variable: 'ZEPHYR_TOKEN')]) {
-                    bat '''
-                        curl -X POST "https://api.zephyrscale.smartbear.com/v2/automations/executions/junit?projectKey=QAF&testCycleKey=YOUR_CYCLE_KEY" ^
-                        -H "Authorization: Bearer %ZEPHYR_TOKEN%" ^
-                        -F "file=@target/surefire-reports/testng-results.xml;type=application/xml"
-                    '''
-                }
-            }
-        }
-
         stage('Report') {
             steps {
                 echo 'Archiving JUnit test results...'
@@ -98,3 +85,10 @@ pipeline {
                 subject: "FAILURE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' - Pipeline broke",
                 body: """<p>The pipeline itself failed (build, checkout, or infrastructure issue) — check console output.</p>
                          <p>Job: ${env.JOB_NAME} | Build: ${env.BUILD_NUMBER}</p>
+                         <p>Console: <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>""",
+                to: 'mktheekshana2001@gmail.com',
+                mimeType: 'text/html'
+            )
+        }
+    }
+}
